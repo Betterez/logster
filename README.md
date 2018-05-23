@@ -16,7 +16,7 @@ With the default `Plug.Logger`, the log output for a request looks like:
 
 With Logster, we've got logging that's much easier to parse and search through, such as:
 ```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 duration=0.402 state=set
+[info] method=GET url=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 responsetime=0.402 state=set
 ```
 
 This becomes handy specially when integrating with log management services such as [Logentries](https://logentries.com/) or [Papertrail](https://papertrailapp.com/).
@@ -106,7 +106,7 @@ plug Logster.Plugs.Logger, formatter: Logster.JSONFormatter
 
 That means your log messages will be formatted thusly:
 ```
-{"status":200,"state":"set","path":"hello","params":{},"method":"GET","format":"json","duration":20.647,"controller":"App.HelloController","action":"show"
+{"status":200,"state":"set","url":"hello","params":{},"method":"GET","format":"json","responsetime":20.647,"controller":"App.HelloController","action":"show"
 ```
 *Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
 
@@ -123,11 +123,11 @@ Logger.metadata(%{user_id: "123", foo: "bar"})
 You can rename the default keys passing a list of `{:key, :new_key}` tuples:
 
 ```elixir
-plug Logster.Plugs.Logger, renames: [{:duration, :response_time}, {:params, :parameters}]
+plug Logster.Plugs.Logger, renames: [{:responsetime, :response_time}, {:params, :parameters}]
 ```
 It will log the following:
 ```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
+[info] method=GET url=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
 ```
 
 ### Add custom fields
@@ -148,7 +148,7 @@ plug Logster.Plugs.Logger, custom_fields: MyCustomFields
 ```
 This will produce output similar to the following:
 ```
-state=set duration=3.881 status=200 params={} path=/foo method=GET host=www.example.com scheme=http
+state=set responsetime=3.881 status=200 params={} url=/foo method=GET host=www.example.com scheme=http
 ```
 
 #### Writing your own formatter
