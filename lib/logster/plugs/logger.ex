@@ -40,12 +40,20 @@ defmodule Logster.Plugs.Logger do
         stop_time = current_time()
         duration = time_diff(start_time, stop_time)
         []
+        |> put_field(:remoteaddr, renames, to_string(:inet_parse.ntoa(conn.remote_ip)))
+        |> put_field(:xapikey, renames, get_head_or_empty(Plug.Conn.get_req_header(conn, "x-api-key")))
+        |> put_field(:date, renames, DateTime.utc_now() |> DateTime.to_iso8601())
+        |> put_field(:traceId, renames, get_head_or_empty(Plug.Conn.get_req_header(conn, "x-amzn-trace-id")))
+        |> put_field(:http, renames, "1.1")
+        |> put_field(:responselength, renames, get_head_or_empty(Plug.Conn.get_resp_header(conn, "content-length")))
+        |> put_field(:referrer, renames, get_head_or_empty(Plug.Conn.get_req_header(conn, "referer")))
+        |> put_field(:useragent, renames, get_head_or_empty(Plug.Conn.get_req_header(conn, "user-agent")))
         |> put_field(:method, renames, conn.method)
-        |> put_field(:path, renames, conn.request_path)
+        |> put_field(:url, renames, conn.request_path)
         |> Keyword.merge(formatted_phoenix_info(conn))
         |> put_field(:params, renames, get_params(conn))
         |> put_field(:status, renames, conn.status)
-        |> put_field(:duration, renames, formatted_duration(duration))
+        |> put_field(:responsetime, renames, formatted_duration(duration))
         |> put_field(:state, renames, conn.state)
         |> Keyword.merge(headers(conn.req_headers, Application.get_env(:logster, :allowed_headers, @default_allowed_headers)))
         |> Keyword.merge(Logger.metadata())
@@ -54,6 +62,13 @@ defmodule Logster.Plugs.Logger do
       end
       conn
     end)
+  end
+
+  defp get_head_or_empty([header]) do
+    header
+  end
+  defp get_head_or_empty(_) do
+    "-"
   end
 
   def custom_fields(_) do

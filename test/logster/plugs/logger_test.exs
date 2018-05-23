@@ -98,7 +98,7 @@ defmodule Logster.Plugs.LoggerTest do
     use Plug.Builder
 
     plug Logster.Plugs.Logger,
-      renames: [{:status, :mystatus}, {:duration, :responsetime}]
+      renames: [{:status, :mystatus}, {:responsetime, :responsetime}]
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
@@ -138,19 +138,19 @@ defmodule Logster.Plugs.LoggerTest do
     {_conn, message} = conn(:get, "/") |> call
 
     assert message =~ "method=GET"
-    assert message =~ "path=/"
+    assert message =~ "url=/"
     assert message =~ "params={}"
     assert message =~ "status=200"
-    assert message =~ ~r/duration=\d+.\d{3}/u
+    assert message =~ ~r/responsetime=\d+.\d{3}/u
     assert message =~ "state=set"
 
     {_conn, message} = conn(:post, "/hello/world", [foo: :bar]) |> call
 
     assert message =~ "method=POST"
-    assert message =~ "path=/hello/world"
+    assert message =~ "url=/hello/world"
     assert message =~ ~s(params={"foo":"bar"})
     assert message =~ "status=200"
-    assert message =~ ~r/duration=\d+.\d{3}/u
+    assert message =~ ~r/responsetime=\d+.\d{3}/u
     assert message =~ "state=set"
   end
 
@@ -174,10 +174,10 @@ defmodule Logster.Plugs.LoggerTest do
     {_conn, message} = conn(:get, "/") |> call
 
     assert message =~ "method=GET"
-    assert message =~ "path=/"
+    assert message =~ "url=/"
     assert message =~ "params={}"
     assert message =~ "status=200"
-    assert message =~ ~r/duration=\d+.\d{3}/u
+    assert message =~ ~r/responsetime=\d+.\d{3}/u
     assert message =~ "state=set"
   end
 
@@ -188,7 +188,7 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ ~s("foo":{"password":"[FILTERED]"})
   end
 
-  test "logs paths with double slashes and trailing slash" do
+  test "logs urls with double slashes and trailing slash" do
     {_conn, message} = conn(:get, "/hello/world") |> put_phoenix_privates |> call
 
     assert message =~ "format=json"
@@ -219,9 +219,9 @@ defmodule Logster.Plugs.LoggerTest do
     json = message
     |> String.split
     |> Enum.at(3)
-    assert %{"path" =>  "/good"} = decoded = Poison.decode!(json)
-    %{"duration" => duration} = decoded
-    assert is_float(duration)
+    assert %{"url" =>  "/good"} = decoded = Poison.decode!(json)
+    %{"responsetime" => responsetime} = decoded
+    assert is_float(responsetime)
   end
 
   test "dump metadata into logs" do
@@ -244,7 +244,7 @@ defmodule Logster.Plugs.LoggerTest do
     {_conn, message} = capture_log fn ->
       conn(:get, "/foo") |> MyRenameFieldsPlug.call([])
     end
-    
+
     assert message =~ "mystatus=200"
     assert message =~ ~r/responsetime=\d+.\d{3}/u
   end
