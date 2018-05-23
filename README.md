@@ -118,6 +118,18 @@ Custom metadata can be added using `Logger.metadata` such as:
 Logger.metadata(%{user_id: "123", foo: "bar"})
 ```
 
+### Renaming default fields
+
+You can rename the default keys passing a list of `{:key, :new_key}` tuples:
+
+```elixir
+plug Logster.Plugs.Logger, renames: [{:duration, :response_time}, {:params, :parameters}]
+```
+It will log the following:
+```
+[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
+```
+
 ### Add custom fields
 
 If additional fields other than the standard fields are desired, provide a module with a custom_fields/1 function which takes a conn and returns a list of keywords. Define a module like the following:

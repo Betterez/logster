@@ -36,16 +36,17 @@ defmodule Logster.Plugs.Logger do
       Logger.log log_level(conn, opts), fn ->
         formatter = Keyword.get(opts, :formatter, Logster.StringFormatter)
         custom_fields = Keyword.get(opts, :custom_fields, __MODULE__)
+        renames = Keyword.get(opts, :renames, [])
         stop_time = current_time()
         duration = time_diff(start_time, stop_time)
         []
-        |> Keyword.put(:method, conn.method)
-        |> Keyword.put(:path, conn.request_path)
+        |> put_field(:method, renames, conn.method)
+        |> put_field(:path, renames, conn.request_path)
         |> Keyword.merge(formatted_phoenix_info(conn))
-        |> Keyword.put(:params, get_params(conn))
-        |> Keyword.put(:status, conn.status)
-        |> Keyword.put(:duration, formatted_duration(duration))
-        |> Keyword.put(:state, conn.state)
+        |> put_field(:params, renames, get_params(conn))
+        |> put_field(:status, renames, conn.status)
+        |> put_field(:duration, renames, formatted_duration(duration))
+        |> put_field(:state, renames, conn.state)
         |> Keyword.merge(headers(conn.req_headers, Application.get_env(:logster, :allowed_headers, @default_allowed_headers)))
         |> Keyword.merge(Logger.metadata())
         |> Keyword.merge(custom_fields.custom_fields(conn))
@@ -57,6 +58,17 @@ defmodule Logster.Plugs.Logger do
 
   def custom_fields(_) do
     []
+  end
+
+  defp put_field(keyword, default_key, renames, value) do
+    case Enum.find(renames, fn ({key, _new_key}) ->
+      key == default_key
+    end) do
+        {_default_key, new_key} ->
+          Keyword.put(keyword, new_key, value)
+        nil ->
+          Keyword.put(keyword, default_key, value)
+    end
   end
 
   defp headers(_, []), do: []
